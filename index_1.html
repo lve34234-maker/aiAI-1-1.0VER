@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EFFICIO — 효율 AI</title>
+<script src="https://js.puter.com/v2/"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0d0e;
+    --panel:#141618;
+    --panel2:#191c1f;
+    --line:#272b30;
+    --line2:#34393f;
+    --txt:#e9e7e1;
+    --dim:#8b8e93;
+    --dim2:#5f6469;
+    --amber:#ffb13d;
+    --amber-dim:#7a5b25;
+    --cyan:#56c9d6;
+    --user:#22262a;
+    --radius:10px;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+    --sans:'Space Grotesk',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);color:var(--txt);font-family:var(--sans);
+    display:flex;flex-direction:column;overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ---------- header ---------- */
+  header{
+    display:flex;align-items:center;gap:14px;
+    padding:10px 16px;border-bottom:1px solid var(--line);
+    background:var(--panel);flex:0 0 auto;
+  }
+  .logo{
+    font-family:var(--mono);font-weight:700;font-size:18px;letter-spacing:1px;
+    color:var(--amber);display:flex;align-items:center;gap:8px;
+  }
+  .logo .dot{width:8px;height:8px;background:var(--amber);border-radius:50%;
+    box-shadow:0 0 10px var(--amber);animation:pulse 2s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  .logo small{color:var(--dim2);font-weight:400;font-size:10px;letter-spacing:2px}
+  header .spacer{flex:1}
+  .ctrl{
+    font-family:var(--mono);font-size:12px;background:var(--panel2);
+    color:var(--txt);border:1px solid var(--line);border-radius:8px;
+    padding:7px 10px;cursor:pointer;
+  }
+  .ctrl:focus{outline:1px solid var(--amber)}
+  select.ctrl{appearance:none;padding-right:26px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238b8e93' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 9px center}
+  .toggle{display:flex;align-items:center;gap:7px;font-family:var(--mono);
+    font-size:11px;color:var(--dim);cursor:pointer;user-select:none}
+  .toggle .sw{width:34px;height:18px;border-radius:10px;background:var(--line2);
+    position:relative;transition:.2s;flex:0 0 auto}
+  .toggle .sw::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;
+    border-radius:50%;background:var(--dim);transition:.2s}
+  .toggle.on .sw{background:var(--amber-dim)}
+  .toggle.on .sw::after{left:18px;background:var(--amber)}
+  .toggle.on{color:var(--amber)}
+
+  /* ---------- main split ---------- */
+  main{flex:1;display:flex;min-height:0}
+  .pane{display:flex;flex-direction:column;min-width:0;min-height:0}
+  .chat-pane{flex:1;border-right:1px solid var(--line)}
+  .code-pane{flex:1;background:var(--panel)}
+  .pane-head{
+    display:flex;align-items:center;gap:8px;padding:8px 14px;
+    border-bottom:1px solid var(--line);font-family:var(--mono);
+    font-size:11px;color:var(--dim);letter-spacing:1px;flex:0 0 auto;
+  }
+  .pane-head .tag{color:var(--amber)}
+  .pane-head .spacer{flex:1}
+  .mini{font-family:var(--mono);font-size:11px;background:transparent;
+    color:var(--dim);border:1px solid var(--line);border-radius:6px;
+    padding:4px 8px;cursor:pointer}
+  .mini:hover{color:var(--txt);border-color:var(--line2)}
+  .mini:disabled{opacity:.35;cursor:default}
+
+  /* ---------- chat ---------- */
+  .messages{flex:1;overflow-y:auto;padding:18px 16px;display:flex;
+    flex-direction:column;gap:14px}
+  .msg{display:flex;gap:10px;max-width:100%}
+  .msg .who{font-family:var(--mono);font-size:10px;flex:0 0 auto;width:34px;
+    padding-top:3px;letter-spacing:1px}
+  .msg.user .who{color:var(--cyan)}
+  .msg.ai .who{color:var(--amber)}
+  .bubble{font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:11px 13px;flex:1;min-width:0}
+  .msg.user .bubble{background:var(--user)}
+  .bubble code.inline{font-family:var(--mono);font-size:12.5px;background:#000;
+    padding:1px 5px;border-radius:4px;color:var(--cyan)}
+  .codeblock{margin:8px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .codeblock .cb-head{display:flex;align-items:center;padding:5px 10px;
+    background:#0a0b0c;font-family:var(--mono);font-size:10px;color:var(--dim)}
+  .codeblock .cb-head .spacer{flex:1}
+  .codeblock .cb-head button{font-family:var(--mono);font-size:10px;background:transparent;
+    color:var(--amber);border:none;cursor:pointer;padding:2px 5px}
+  .codeblock pre{margin:0;padding:10px;overflow-x:auto;background:#000;
+    font-family:var(--mono);font-size:12.5px;line-height:1.55;color:#d4d2cc}
+  .empty{color:var(--dim2);font-family:var(--mono);font-size:12px;
+    text-align:center;margin:auto;padding:30px;line-height:1.9}
+  .empty b{color:var(--amber);font-weight:500}
+  .cursor::after{content:'▋';color:var(--amber);animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ---------- code pane content ---------- */
+  .code-body{flex:1;overflow:auto;background:#000}
+  .code-body pre{margin:0;padding:14px;font-family:var(--mono);font-size:13px;
+    line-height:1.6;color:#d4d2cc;white-space:pre;min-height:100%}
+  .preview-frame{flex:1;border:none;background:#fff;width:100%}
+  .code-empty{flex:1;display:flex;align-items:center;justify-content:center;
+    color:var(--dim2);font-family:var(--mono);font-size:12px;text-align:center;
+    padding:30px;line-height:1.9;background:#000}
+
+  /* ---------- input ---------- */
+  .input-row{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);
+    background:var(--panel);flex:0 0 auto}
+  textarea#box{flex:1;resize:none;background:var(--panel2);color:var(--txt);
+    border:1px solid var(--line);border-radius:var(--radius);padding:11px 13px;
+    font-family:var(--sans);font-size:14px;line-height:1.5;max-height:140px;min-height:46px}
+  textarea#box:focus{outline:none;border-color:var(--amber-dim)}
+  textarea#box::placeholder{color:var(--dim2)}
+  .send{flex:0 0 auto;background:var(--amber);color:#1a1206;border:none;
+    border-radius:var(--radius);padding:0 18px;font-family:var(--mono);font-weight:700;
+    font-size:13px;cursor:pointer;display:flex;align-items:center}
+  .send:disabled{background:var(--line2);color:var(--dim);cursor:default}
+
+  /* ---------- mobile ---------- */
+  .tabs{display:none;flex:0 0 auto;border-bottom:1px solid var(--line);background:var(--panel)}
+  .tabs button{flex:1;background:transparent;border:none;color:var(--dim);
+    font-family:var(--mono);font-size:12px;padding:9px;cursor:pointer;
+    border-bottom:2px solid transparent}
+  .tabs button.active{color:var(--amber);border-bottom-color:var(--amber)}
+  @media(max-width:760px){
+    .tabs{display:flex}
+    main{position:relative}
+    .chat-pane{border-right:none}
+    .pane{display:none;flex:1;width:100%}
+    .pane.show{display:flex}
+    header{flex-wrap:wrap}
+    .logo small{display:none}
+  }
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><span class="dot"></span>EFFICIO <small>EFFICIENCY ENGINE</small></div>
+  <div class="spacer"></div>
+  <div class="toggle on" id="effToggle" title="잡말 없이 핵심·코드만 답하게 함">
+    <span class="sw"></span>효율모드
+  </div>
+  <select class="ctrl" id="model" title="AI 두뇌 선택">
+    <option value="anthropic/claude-sonnet-4-6">Claude Sonnet 4.6</option>
+    <option value="openai/gpt-5.4-nano">GPT-5.4 nano (빠름)</option>
+    <option value="openai/gpt-5.5">GPT-5.5</option>
+    <option value="google/gemini-3.5-flash">Gemini 3.5 Flash</option>
+    <option value="deepseek/deepseek-chat">DeepSeek</option>
+  </select>
+  <button class="ctrl" id="clear" title="대화 새로 시작">초기화</button>
+</header>
+
+<div class="tabs">
+  <button id="tabChat" class="active">채팅</button>
+  <button id="tabCode">코드</button>
+</div>
+
+<main>
+  <!-- CHAT -->
+  <section class="pane chat-pane show" id="chatPane">
+    <div class="pane-head"><span class="tag">▸</span> CHAT<div class="spacer"></div>
+      <span id="status" style="color:var(--dim2)">준비됨</span></div>
+    <div class="messages" id="messages">
+      <div class="empty" id="welcome">
+        <b>EFFICIO</b> — 효율만 추구하는 AI<br><br>
+        자연어로 물어봐. 코드 짜달라고 하면<br>
+        오른쪽 <b>CODE</b> 패널에 자동으로 뽑아줘.<br><br>
+        처음 보내면 <b>무료 Puter 로그인</b> 창이 한 번 떠.<br>
+        (개발자는 0원, 사용자가 자기 사용량만 부담하는 구조)
+      </div>
+    </div>
+    <div class="input-row">
+      <textarea id="box" placeholder="시키고 싶은 거 입력 (Enter 전송 / Shift+Enter 줄바꿈)"></textarea>
+      <button class="send" id="send">전송</button>
+    </div>
+  </section>
+
+  <!-- CODE -->
+  <section class="pane code-pane" id="codePane">
+    <div class="pane-head"><span class="tag">▸</span> CODE
+      <span id="lang" style="color:var(--dim2);margin-left:4px"></span>
+      <div class="spacer"></div>
+      <button class="mini" id="copyCode" disabled>복사</button>
+      <button class="mini" id="runCode" disabled>실행</button>
+      <button class="mini" id="dlCode" disabled>다운로드</button>
+    </div>
+    <div class="code-empty" id="codeEmpty">
+      AI가 만든 코드가<br>여기에 표시돼.
+    </div>
+    <div class="code-body" id="codeBody" style="display:none"><pre id="codeText"></pre></div>
+    <iframe class="preview-frame" id="preview" style="display:none"></iframe>
+  </section>
+</main>
+
+<script>
+/* ===== 상태 ===== */
+const history = [];          // {role, content}
+let busy = false;
+let lastCode = '', lastLang = '';
+
+const SYS_EFFICIENT =
+`너는 EFFICIO, 효율만 추구하는 AI다. 규칙:
+- 인사말, 사과, 자기소개, "물론이죠", "도와드리겠습니다" 같은 잡말 금지.
+- 바로 본론. 핵심만. 최대한 짧게.
+- 코드 요청이면 설명을 길게 늘어놓지 말고 코드 블록을 먼저 준다.
+- 코드는 항상 \`\`\`언어 ... \`\`\` 형식 마크다운 코드블록으로 감싼다.
+- 모르면 모른다고 한 줄로. 군더더기 없이.
+- 다만 안전·윤리에 어긋나는 요청(타인 해킹, 악성코드, 무기 등)은 거절한다.
+- 한국어로 답한다.`;
+const SYS_NORMAL =
+`너는 친절한 코딩 도우미다. 코드는 항상 \`\`\`언어 ... \`\`\` 형식 코드블록으로 감싼다. 한국어로 답한다.`;
+
+/* ===== DOM ===== */
+const $ = s => document.querySelector(s);
+const messagesEl = $('#messages'), box = $('#box'), sendBtn = $('#send');
+const codeEmpty = $('#codeEmpty'), codeBody = $('#codeBody'), codeText = $('#codeText');
+const preview = $('#preview'), langEl = $('#lang'), statusEl = $('#status');
+
+/* ===== 효율모드 토글 ===== */
+$('#effToggle').onclick = e => e.currentTarget.classList.toggle('on');
+
+/* ===== 모바일 탭 ===== */
+$('#tabChat').onclick = () => switchTab('chat');
+$('#tabCode').onclick = () => switchTab('code');
+function switchTab(t){
+  $('#tabChat').classList.toggle('active', t==='chat');
+  $('#tabCode').classList.toggle('active', t==='code');
+  $('#chatPane').classList.toggle('show', t==='chat');
+  $('#codePane').classList.toggle('show', t==='code');
+}
+
+/* ===== 초기화 ===== */
+$('#clear').onclick = () => {
+  history.length = 0;
+  messagesEl.innerHTML = `<div class="empty"><b>초기화됨</b><br><br>새로 시작해.</div>`;
+  setCode('', '');
+};
+
+/* ===== 입력 자동 높이 ===== */
+box.addEventListener('input', () => {
+  box.style.height = 'auto';
+  box.style.height = Math.min(box.scrollHeight, 140) + 'px';
+});
+box.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); doSend(); }
+});
+sendBtn.onclick = doSend;
+
+/* ===== escape ===== */
+function esc(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+/* ===== 마크다운(코드블록/인라인코드) 가볍게 렌더 ===== */
+function renderContent(text){
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  let html = '';
+  for(const p of parts){
+    const m = p.match(/^```(\w*)\n?([\s\S]*?)```$/);
+    if(m){
+      const lang = m[1] || 'code', code = m[2].replace(/\n$/,'');
+      html += `<div class="codeblock"><div class="cb-head">${esc(lang)}
+        <div class="spacer"></div>
+        <button onclick="pushToPanel(this)" data-lang="${esc(lang)}">→ CODE 패널</button>
+        <button onclick="copyText(this)">복사</button></div>
+        <pre data-raw="${encodeURIComponent(code)}">${esc(code)}</pre></div>`;
+    } else {
+      html += esc(p).replace(/`([^`\n]+)`/g,'<code class="inline">$1</code>');
+    }
+  }
+  return html;
+}
+
+/* 코드블록 버튼들 (전역) */
+window.copyText = btn => {
+  const raw = decodeURIComponent(btn.closest('.codeblock').querySelector('pre').dataset.raw);
+  navigator.clipboard.writeText(raw); btn.textContent='복사됨'; setTimeout(()=>btn.textContent='복사',1200);
+};
+window.pushToPanel = btn => {
+  const raw = decodeURIComponent(btn.closest('.codeblock').querySelector('pre').dataset.raw);
+  setCode(raw, btn.dataset.lang);
+  if(window.innerWidth<=760) switchTab('code');
+};
+
+/* ===== 메시지 추가 ===== */
+function addMsg(role, text){
+  const w = $('#welcome'); if(w) w.remove();
+  const el = document.createElement('div');
+  el.className = 'msg ' + (role==='user'?'user':'ai');
+  el.innerHTML = `<div class="who">${role==='user'?'YOU':'AI'}</div>
+    <div class="bubble">${role==='user'?esc(text):renderContent(text)}</div>`;
+  messagesEl.appendChild(el);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return el.querySelector('.bubble');
+}
+
+/* ===== 코드 패널 ===== */
+function setCode(code, lang){
+  lastCode = code; lastLang = (lang||'').toLowerCase();
+  const has = !!code.trim();
+  $('#copyCode').disabled = $('#dlCode').disabled = !has;
+  $('#runCode').disabled = !(has && /^(html|xml|svg)$/.test(lastLang));
+  langEl.textContent = has ? '['+(lang||'code')+']' : '';
+  preview.style.display='none';
+  if(!has){ codeEmpty.style.display='flex'; codeBody.style.display='none'; return; }
+  codeEmpty.style.display='none'; codeBody.style.display='flex';
+  codeText.textContent = code;
+}
+$('#copyCode').onclick = e => {
+  navigator.clipboard.writeText(lastCode); e.target.textContent='복사됨';
+  setTimeout(()=>e.target.textContent='복사',1200);
+};
+$('#dlCode').onclick = () => {
+  const ext = ({html:'html',javascript:'js',js:'js',python:'py',css:'css',json:'json'}[lastLang]||'txt');
+  const blob = new Blob([lastCode],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'efficio.'+ext; a.click();
+};
+$('#runCode').onclick = () => {
+  const showing = preview.style.display!=='none';
+  if(showing){ preview.style.display='none'; codeBody.style.display='flex'; return; }
+  codeBody.style.display='none'; preview.style.display='block';
+  preview.srcdoc = lastCode;
+};
+
+/* ===== 전송 ===== */
+async function doSend(){
+  const text = box.value.trim();
+  if(!text || busy) return;
+  if(typeof puter === 'undefined'){
+    addMsg('ai','⚠ Puter 로딩 실패. 인터넷 연결을 확인하고 새로고침해줘.');
+    return;
+  }
+  busy = true; sendBtn.disabled = true;
+  box.value=''; box.style.height='auto';
+  addMsg('user', text);
+  history.push({role:'user', content:text});
+
+  const sys = $('#effToggle').classList.contains('on') ? SYS_EFFICIENT : SYS_NORMAL;
+  const msgs = [{role:'system', content:sys}, ...history];
+  const model = $('#model').value;
+
+  const bubble = addMsg('ai','');
+  bubble.classList.add('cursor');
+  statusEl.textContent = '생각 중…';
+
+  try{
+    const resp = await puter.ai.chat(msgs, { model, stream:true });
+    let full = '';
+    for await (const part of resp){
+      const t = part?.text || '';
+      if(t){ full += t; bubble.innerHTML = renderContent(full); messagesEl.scrollTop = messagesEl.scrollHeight; }
+    }
+    bubble.classList.remove('cursor');
+    if(!full.trim()){ full='(빈 응답)'; bubble.textContent=full; }
+    history.push({role:'assistant', content:full});
+    autoExtractCode(full);
+    statusEl.textContent = '준비됨';
+  }catch(err){
+    bubble.classList.remove('cursor');
+    bubble.innerHTML = renderContent('⚠ 오류: ' + (err?.message || err) +
+      '\n\n로그인을 취소했거나 사용량 한도일 수 있어. 새로고침 후 다시 시도해줘.');
+    statusEl.textContent = '오류';
+  }finally{
+    busy=false; sendBtn.disabled=false; box.focus();
+  }
+}
+
+/* 응답에서 마지막 코드블록 자동으로 CODE 패널에 */
+function autoExtractCode(text){
+  const blocks = [...text.matchAll(/```(\w*)\n?([\s\S]*?)```/g)];
+  if(!blocks.length) return;
+  const last = blocks[blocks.length-1];
+  setCode(last[2].replace(/\n$/,''), last[1]||'code');
+}
+
+box.focus();
+</script>
+</body>
+</html>
